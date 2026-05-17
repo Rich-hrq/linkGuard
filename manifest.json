@@ -1,0 +1,19 @@
+{
+  "manifest_version": 3,
+  "name": "Link Guard",
+  "version": "1.0.0",
+  "description": "拦截含西里尔字母的链接并提示确认跳转",
+  "icons": {},
+  "permissions": ["tabs"],
+  "host_permissions": ["<all_urls>"],
+  "content_scripts": [
+    {
+      "matches": ["<all_urls>"],
+      "js": ["content.js"],
+      "run_at": "document_start"
+    }
+  ],
+  "background": {
+    "service_worker": "background.js"
+  }
+}

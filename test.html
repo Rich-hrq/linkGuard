@@ -1,0 +1,216 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Link Guard 测试页面</title>
+  <style>
+    body { font-family: -apple-system, sans-serif; max-width: 800px; margin: 40px auto; padding: 0 20px; line-height: 1.8; }
+    h1 { border-bottom: 2px solid #333; padding-bottom: 10px; }
+    h2 { color: #555; margin-top: 30px; }
+    .test-case { background: #f5f5f5; padding: 12px 16px; margin: 8px 0; border-radius: 6px; }
+    .test-case a { margin-right: 16px; }
+    .tag { display: inline-block; font-size: 12px; padding: 2px 8px; border-radius: 4px; margin-right: 8px; font-weight: bold; }
+    .tag-danger { background: #ffe0e0; color: #c00; }
+    .tag-safe { background: #e0ffe0; color: #090; }
+    .tag-special { background: #e0e0ff; color: #009; }
+    .desc { color: #888; font-size: 14px; }
+  </style>
+</head>
+<body>
+
+<h1>Link Guard 测试页面</h1>
+<p>点击以下各类链接，验证扩展的拦截与弹窗行为。</p>
+<p style="background: #fff3cd; padding: 10px 14px; border-radius: 6px; font-size: 14px;">
+  <strong>注意：</strong>右键菜单（"Open link in new tab" 等）由浏览器原生处理，不触发 DOM 点击事件，扩展无法拦截。请使用<strong>左键直接点击</strong>进行测试。
+</p>
+
+<!-- ==================== 1. 正常链接 ==================== -->
+<h2>1. 正常链接（应弹出 TLD 确认框）</h2>
+
+<div class="test-case">
+  <span class="tag tag-safe">普通</span>
+  <a href="https://www.google.com">https://www.google.com</a>
+  <span class="desc">→ 确认框应显示顶级域名：.com</span>
+</div>
+
+<div class="test-case">
+  <span class="tag tag-safe">普通</span>
+  <a href="https://github.com">https://github.com</a>
+  <span class="desc">→ 确认框应显示顶级域名：.com</span>
+</div>
+
+<div class="test-case">
+  <span class="tag tag-safe">普通</span>
+  <a href="https://zh.wikipedia.org/wiki/Main_Page">https://zh.wikipedia.org</a>
+  <span class="desc">→ 确认框应显示顶级域名：.org</span>
+</div>
+
+<div class="test-case">
+  <span class="tag tag-safe">新国别域名</span>
+  <a href="https://example.io">https://example.io</a>
+  <span class="desc">→ 确认框应显示顶级域名：.io</span>
+</div>
+
+<div class="test-case">
+  <span class="tag tag-safe">新国别域名</span>
+  <a href="https://example.dev">https://example.dev</a>
+  <span class="desc">→ 确认框应显示顶级域名：.dev</span>
+</div>
+
+<!-- ==================== 2. 西里尔字母攻击 ==================== -->
+<h2>2. 西里尔字母攻击（应弹出警告并阻止）</h2>
+
+<div class="test-case">
+  <span class="tag tag-danger">攻击</span>
+  <a href="https://gооgle.com">gооgle.com（oo 是西里尔 о）</a>
+  <span class="desc">→ 域名中的 "о" 是西里尔字母 U+043E</span>
+</div>
+
+<div class="test-case">
+  <span class="tag tag-danger">攻击</span>
+  <a href="https://аpple.com">аpple.com（а 是西里尔 а）</a>
+  <span class="desc">→ 域名首字母 "а" 是西里尔字母 U+0430</span>
+</div>
+
+<div class="test-case">
+  <span class="tag tag-danger">攻击</span>
+  <a href="https://microsоft.com">microsоft.com（о 是西里尔）</a>
+  <span class="desc">→ "о" 是西里尔字母 U+043E</span>
+</div>
+
+<div class="test-case">
+  <span class="tag tag-danger">攻击</span>
+  <a href="https://facebооk.com/path">路径中含西里尔</a>
+  <span class="desc">→ 整个 URL 都会被检测</span>
+</div>
+
+<div class="test-case">
+  <span class="tag tag-danger">攻击</span>
+  <a href="https://example.com?q=привет">参数中含西里尔</a>
+  <span class="desc">→ 查询参数中的西里尔字母也应被检测到</span>
+</div>
+
+<div class="test-case">
+  <span class="tag tag-danger">攻击</span>
+  <a href="https://www.亚mazon.com">亚mazon.com（亚 是中日韩字符，非西里尔）</a>
+  <span class="desc">→ 不应被拦截（中日韩字符不属于西里尔字母）</span>
+</div>
+
+<!-- ==================== 3. 特殊链接类型 ==================== -->
+<h2>3. 特殊链接类型（不应被拦截）</h2>
+
+<div class="test-case">
+  <span class="tag tag-special">javascript:</span>
+  <a href="javascript:alert('hello')">javascript:alert('hello')</a>
+  <span class="desc">→ 不拦截，直接执行 JS</span>
+</div>
+
+<div class="test-case">
+  <span class="tag tag-special">mailto:</span>
+  <a href="mailto:test@example.com">mailto:test@example.com</a>
+  <span class="desc">→ 不拦截，打开邮件客户端</span>
+</div>
+
+<div class="test-case">
+  <span class="tag tag-special">tel:</span>
+  <a href="tel:+8612345678901">tel:+8612345678901</a>
+  <span class="desc">→ 不拦截，触发拨号</span>
+</div>
+
+<div class="test-case">
+  <span class="tag tag-special">锚点</span>
+  <a href="#section-test">#section-test</a>
+  <span class="desc">→ 不拦截，页面内跳转</span>
+</div>
+
+<!-- ==================== 4. target="_blank" ==================== -->
+<h2>4. 新标签页打开（target="_blank"）</h2>
+
+<div class="test-case">
+  <span class="tag tag-safe">新标签</span>
+  <a href="https://www.google.com" target="_blank">Google（新标签页）</a>
+  <span class="desc">→ 确认后应在新标签页打开</span>
+</div>
+
+<div class="test-case">
+  <span class="tag tag-danger">攻击+新标签</span>
+  <a href="https://gооgle.com" target="_blank">gооgle.com（新标签页攻击）</a>
+  <span class="desc">→ 应弹出西里尔警告，阻止跳转</span>
+</div>
+
+<!-- ==================== 5. 含嵌套元素的链接 ==================== -->
+<h2>5. 含嵌套元素的链接</h2>
+
+<div class="test-case">
+  <span class="tag tag-safe">嵌套</span>
+  <a href="https://www.google.com"><strong>粗体文字</strong> 内的链接</a>
+  <span class="desc">→ 点击粗体文字应正常触发检测</span>
+</div>
+
+<div class="test-case">
+  <span class="tag tag-safe">嵌套</span>
+  <a href="https://github.com"><span style="color: blue; text-decoration: underline;">带样式的 span</span></a>
+  <span class="desc">→ 点击 span 内文字应正常触发检测</span>
+</div>
+
+<div class="test-case">
+  <span class="tag tag-danger">嵌套攻击</span>
+  <a href="https://аpple.com"><em><b>嵌套的伪装链接</b></em></a>
+  <span class="desc">→ 点击嵌套的加粗斜体文字应触发西里尔警告</span>
+</div>
+
+<!-- ==================== 6. 修饰键组合 ==================== -->
+<h2>6. 修饰键组合（不应拦截）</h2>
+
+<div class="test-case">
+  <span class="tag tag-special">Ctrl+点击</span>
+  <a href="https://www.google.com">Google（按住 Ctrl 再点击）</a>
+  <span class="desc">→ 不拦截，由浏览器处理（新标签页）</span>
+</div>
+
+<div class="test-case">
+  <span class="tag tag-special">Cmd+点击</span>
+  <a href="https://github.com">GitHub（macOS 按住 Cmd 再点击）</a>
+  <span class="desc">→ 不拦截，由浏览器处理（新标签页）</span>
+</div>
+
+<div class="test-case">
+  <span class="tag tag-special">Shift+点击</span>
+  <a href="https://example.com">example.com（按住 Shift 再点击）</a>
+  <span class="desc">→ 不拦截，由浏览器处理（新窗口）</span>
+</div>
+
+<!-- ==================== 7. 边界情况 ==================== -->
+<h2>7. 边界情况</h2>
+
+<div class="test-case">
+  <span class="tag tag-safe">HTTP</span>
+  <a href="http://example.com">http://example.com（非 HTTPS）</a>
+  <span class="desc">→ 应正常弹出 TLD 确认框</span>
+</div>
+
+<div class="test-case">
+  <span class="tag tag-safe">长 URL</span>
+  <a href="https://www.example.com/very/long/path/to/some/resource?param1=value1&param2=value2&param3=value3#section">https://www.example.com/very/long/path/...</a>
+  <span class="desc">→ TLD 仍应显示 .com</span>
+</div>
+
+<div class="test-case">
+  <span class="tag tag-safe">子域名</span>
+  <a href="https://mail.google.com">https://mail.google.com</a>
+  <span class="desc">→ TLD 应显示 .com</span>
+</div>
+
+<div class="test-case">
+  <span class="tag tag-safe">多级 TLD</span>
+  <a href="https://www.example.co.uk">https://www.example.co.uk</a>
+  <span class="desc">→ TLD 应显示 .uk（仅取最后一段）</span>
+</div>
+
+<div id="section-test" style="margin-top: 40px; padding: 20px; background: #fff3cd; border-radius: 6px;">
+  <strong>锚点目标位置</strong> — 如果你点击了上面的锚点链接，页面应滚动到这里。
+</div>
+
+</body>
+</html>
