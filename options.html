@@ -1,0 +1,127 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Link Guard 设置</title>
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+      max-width: 640px;
+      margin: 0 auto;
+      padding: 24px;
+      color: #1a1a1a;
+      background: #f9f9f9;
+    }
+    h1 { font-size: 20px; margin-bottom: 24px; }
+    label { display: block; font-weight: 600; margin-bottom: 6px; }
+    .section {
+      background: #fff;
+      border: 1px solid #e0e0e0;
+      border-radius: 8px;
+      padding: 16px;
+      margin-bottom: 16px;
+    }
+    .section h2 { font-size: 15px; margin-bottom: 12px; }
+    input[type="number"] {
+      width: 120px;
+      padding: 6px 10px;
+      border: 1px solid #ccc;
+      border-radius: 4px;
+      font-size: 14px;
+    }
+    button {
+      padding: 6px 16px;
+      border: none;
+      border-radius: 4px;
+      cursor: pointer;
+      font-size: 14px;
+    }
+    .btn-primary {
+      background: #4a90d9;
+      color: #fff;
+    }
+    .btn-primary:hover { background: #3a7bc8; }
+    .btn-danger {
+      background: #d9534f;
+      color: #fff;
+    }
+    .btn-danger:hover { background: #c9302c; }
+    .btn-row { margin-top: 12px; display: flex; gap: 8px; align-items: center; }
+    #status {
+      color: #4a9;
+      font-size: 13px;
+      margin-left: 8px;
+      opacity: 0;
+      transition: opacity 0.3s;
+    }
+    #status.show { opacity: 1; }
+    .hostlist {
+      max-height: 320px;
+      overflow-y: auto;
+      border: 1px solid #e0e0e0;
+      border-radius: 4px;
+      margin-top: 8px;
+    }
+    .hostlist:empty {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      min-height: 60px;
+      color: #999;
+      font-size: 13px;
+    }
+    .hostlist:empty::after { content: "暂无记录"; }
+    .host-item {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 6px 12px;
+      border-bottom: 1px solid #f0f0f0;
+      font-size: 13px;
+      font-family: monospace;
+    }
+    .host-item:last-child { border-bottom: none; }
+    .host-item button {
+      padding: 2px 8px;
+      font-size: 12px;
+      background: #eee;
+      color: #666;
+    }
+    .host-item button:hover { background: #ddd; }
+    .count-badge {
+      display: inline-block;
+      background: #e0e0e0;
+      border-radius: 10px;
+      padding: 1px 8px;
+      font-size: 12px;
+      font-weight: normal;
+      margin-left: 6px;
+    }
+  </style>
+</head>
+<body>
+  <h1>Link Guard 设置</h1>
+
+  <div class="section">
+    <h2>白名单容量</h2>
+    <label for="maxCount">最大记录条数</label>
+    <input type="number" id="maxCount" min="1" max="10000" value="500">
+    <div class="btn-row">
+      <button class="btn-primary" id="saveMax">保存</button>
+      <span id="status">已保存</span>
+    </div>
+  </div>
+
+  <div class="section">
+    <h2>已记录域名 <span class="count-badge" id="countBadge">0</span></h2>
+    <div class="btn-row" style="margin-bottom: 8px;">
+      <button class="btn-danger" id="clearAll">清空全部</button>
+    </div>
+    <div class="hostlist" id="hostlist"></div>
+  </div>
+
+  <script src="options.js"></script>
+</body>
+</html>

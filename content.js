@@ -3,11 +3,36 @@
 // Matches Cyrillic, Cyrillic Supplement, Cyrillic Extended-A/B blocks
 const CYRILLIC_RE = /[Ѐ-ӿԀ-ԯⷠ-ⷿꙀ-ꚟ]/;
 
+const STORAGE_KEY = "visitedHostnames";
+const MAX_COUNT_KEY = "maxVisitedCount";
+const DEFAULT_MAX = 500;
+
 function findAnchor(el) {
   while (el && el.tagName !== "A") {
     el = el.parentElement;
   }
   return el ? el : null;
+}
+
+async function getVisitedData() {
+  return new Promise((resolve) => {
+    chrome.storage.local.get([STORAGE_KEY, MAX_COUNT_KEY], (result) => {
+      resolve({
+        visited: result[STORAGE_KEY] || [],
+        maxCount: result[MAX_COUNT_KEY] || DEFAULT_MAX,
+      });
+    });
+  });
+}
+
+async function saveVisitedHostname(hostname) {
+  const { visited, maxCount } = await getVisitedData();
+  const filtered = visited.filter((h) => h !== hostname);
+  filtered.push(hostname);
+  while (filtered.length > maxCount) {
+    filtered.shift();
+  }
+  chrome.storage.local.set({ [STORAGE_KEY]: filtered });
 }
 
 function checkUrl(rawHref) {
@@ -22,7 +47,6 @@ function checkUrl(rawHref) {
     return null;
   }
 
-  // Parse to validate URL and extract components
   let url;
   try {
     url = new URL(rawHref, document.baseURI);
@@ -34,23 +58,13 @@ function checkUrl(rawHref) {
     return null;
   }
 
-  // Check raw href for Cyrillic characters (before browser punycode-encodes domain)
   if (CYRILLIC_RE.test(rawHref)) {
     alert("⚠️ URL 中包含西里尔字母，已阻止跳转。\n\n" + url.href);
     return null;
   }
 
-  // Also check parsed URL's search params (browser preserves Unicode there)
   if (url.search && CYRILLIC_RE.test(url.search)) {
     alert("⚠️ URL 中包含西里尔字母，已阻止跳转。\n\n" + url.href);
-    return null;
-  }
-
-  const hostname = url.hostname;
-  const parts = hostname.split(".");
-  const tld = parts.length > 1 ? "." + parts[parts.length - 1] : hostname;
-
-  if (!confirm("即将跳转至顶级域名：" + tld + "\n\n是否继续？")) {
     return null;
   }
 
@@ -69,7 +83,6 @@ document.addEventListener(
     var rawHref = anchor.getAttribute("href");
     if (!rawHref) return;
 
-    // Only intercept http/https links; let javascript:, mailto:, tel:, anchors pass through
     var parsed;
     try {
       parsed = new URL(rawHref, document.baseURI);
@@ -88,21 +101,39 @@ document.addEventListener(
       return;
     }
 
-    // Show TLD confirmation
-    var hostname = parsed.hostname;
-    var parts = hostname.split(".");
-    var tld = parts.length > 1 ? "." + parts[parts.length - 1] : hostname;
-
     e.preventDefault();
-    if (!confirm("即将跳转至顶级域名：" + tld + "\n\n是否继续？")) {
-      return;
-    }
 
-    if (anchor.target === "_blank") {
-      chrome.runtime.sendMessage({ action: "openTab", url: parsed.href });
-    } else {
-      window.location.href = parsed.href;
-    }
+    var hostname = parsed.hostname;
+
+    getVisitedData().then(function ({ visited }) {
+      if (visited.includes(hostname)) {
+        // Whitelisted — skip confirm
+        if (anchor.target === "_blank") {
+          chrome.runtime.sendMessage({ action: "openTab", url: parsed.href });
+        } else {
+          window.location.href = parsed.href;
+        }
+        return;
+      }
+
+      // Not whitelisted — show TLD confirm
+      var parts = hostname.split(".");
+      var tld =
+        parts.length > 1 ? "." + parts[parts.length - 1] : hostname;
+
+      if (!confirm("即将跳转至顶级域名：" + tld + "\n\n是否继续？")) {
+        return;
+      }
+
+      // User confirmed — record hostname and navigate
+      saveVisitedHostname(hostname);
+
+      if (anchor.target === "_blank") {
+        chrome.runtime.sendMessage({ action: "openTab", url: parsed.href });
+      } else {
+        window.location.href = parsed.href;
+      }
+    });
   },
   true
 );

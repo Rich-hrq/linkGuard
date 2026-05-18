@@ -4,7 +4,7 @@
   "version": "1.0.0",
   "description": "拦截含西里尔字母的链接并提示确认跳转",
   "icons": {},
-  "permissions": ["tabs"],
+  "permissions": ["tabs", "storage"],
   "host_permissions": ["<all_urls>"],
   "content_scripts": [
     {
@@ -15,5 +15,6 @@
   ],
   "background": {
     "service_worker": "background.js"
-  }
+  },
+  "options_page": "options.html"
 }

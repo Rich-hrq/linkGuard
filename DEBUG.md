@@ -61,3 +61,13 @@
 **原因**：`checkUrl()` 对这些链接返回 `null`，而点击处理器对所有 `null` 结果统一调用了 `e.preventDefault()`，阻止了浏览器的默认行为。
 
 **修复**：重构点击处理器，仅拦截 `http:` / `https:` 协议的链接。对其他协议的链接直接 `return`，不调用 `preventDefault()`，让浏览器原生处理。
+
+---
+
+## 问题 7：新增白名单功能后的事件处理时序
+
+**现象**：新增白名单检查后，需要先从 `chrome.storage.local` 异步读取数据，再决定是否弹出 confirm。但 `e.preventDefault()` 必须同步调用，否则浏览器已开始导航。
+
+**原因**：`chrome.storage.local.get()` 是异步操作，如果在回调中才调用 `preventDefault()`，浏览器默认行为可能已触发。
+
+**修复**：在调用 `getVisitedData()` 之前同步执行 `e.preventDefault()`，先无条件阻止默认行为。在异步回调中根据白名单检查结果决定是否手动导航（`window.location.href` 或 `chrome.runtime.sendMessage`）。
