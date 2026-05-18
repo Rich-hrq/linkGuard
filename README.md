@@ -141,7 +141,10 @@ browser_extension/
 ├── DEBUG.md         # 调试记录：开发过程中的问题与修复
 ├── guideline.md     # 学习指南：Pipeline 全景图、核心技术点讲解
 ├── INTERVIEW.md     # 面试准备：核心概念、设计决策、常见追问
-└── TUTORIAL.md      # 浏览器扩展开发入门教程
+├── TUTORIAL.md      # 浏览器扩展开发入门教程
+└── FEATURES/        # 功能设计档案：每个功能的需求、设计、实现方案
+    ├── cyrillic-detection.md      # 西里尔字母检测功能
+    └── visited-hostname-whitelist.md  # 访问域名白名单功能
 ```
 
 ---
